@@ -1,4 +1,3 @@
-# _This project is no longer being maintained!_
 
 Similar active projects:
 * https://github.com/OutSystems/CefGlue
@@ -12,20 +11,13 @@ ChromiumGtk is a WebView for GtkSharp using Chromium Embedded Framework (CEF) an
 
 ## Supported Platforms
 
-* .NET Core 3.1 on Ubuntu 20.04 (AMD64)
+* .NET6 on Fedora 38 (AMD64)
+* .NET6 on Windows 10/11 (AMD64)
 
 ## Dependencies
 
 * [GtkSharp](https://github.com/GtkSharp/GtkSharp)
 * [CEF](https://bitbucket.org/chromiumembedded/cef/)
-
-## Installation
-
-Use [nuget](https://www.nuget.org/packages/Lunixo.ChromiumGtk.Linux64/) to install ChromiumGtk.
-
-```bash
-dotnet add package Lunixo.ChromiumGtk.Linux64
-```
 
 ## Usage
 
