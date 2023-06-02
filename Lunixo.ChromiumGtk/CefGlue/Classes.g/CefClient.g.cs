@@ -7,6 +7,7 @@ namespace Xilium.CefGlue
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Runtime.InteropServices;
+    using System.Threading;
     using Xilium.CefGlue.Interop;
     
     // Role: HANDLER
@@ -17,8 +18,6 @@ namespace Xilium.CefGlue
         private int _refct;
         private cef_client_t* _self;
         
-        protected object SyncRoot { get { return this; } }
-        
         internal static CefClient FromNativeOrNull(cef_client_t* ptr)
         {
             CefClient value = null;
@@ -26,6 +25,8 @@ namespace Xilium.CefGlue
             lock (_roots)
             {
                 found = _roots.TryGetValue((IntPtr)ptr, out value);
+                // as we're getting the ref from the outside, it's our responsibility to decrement it
+                value.release(ptr);
             }
             return found ? value : null;
         }
@@ -51,14 +52,15 @@ namespace Xilium.CefGlue
         private cef_client_t.get_find_handler_delegate _dsb;
         private cef_client_t.get_focus_handler_delegate _dsc;
         private cef_client_t.get_frame_handler_delegate _dsd;
-        private cef_client_t.get_jsdialog_handler_delegate _dse;
-        private cef_client_t.get_keyboard_handler_delegate _dsf;
-        private cef_client_t.get_life_span_handler_delegate _ds10;
-        private cef_client_t.get_load_handler_delegate _ds11;
-        private cef_client_t.get_print_handler_delegate _ds12;
-        private cef_client_t.get_render_handler_delegate _ds13;
-        private cef_client_t.get_request_handler_delegate _ds14;
-        private cef_client_t.on_process_message_received_delegate _ds15;
+        private cef_client_t.get_permission_handler_delegate _dse;
+        private cef_client_t.get_jsdialog_handler_delegate _dsf;
+        private cef_client_t.get_keyboard_handler_delegate _ds10;
+        private cef_client_t.get_life_span_handler_delegate _ds11;
+        private cef_client_t.get_load_handler_delegate _ds12;
+        private cef_client_t.get_print_handler_delegate _ds13;
+        private cef_client_t.get_render_handler_delegate _ds14;
+        private cef_client_t.get_request_handler_delegate _ds15;
+        private cef_client_t.on_process_message_received_delegate _ds16;
         
         protected CefClient()
         {
@@ -92,22 +94,24 @@ namespace Xilium.CefGlue
             _self->_get_focus_handler = Marshal.GetFunctionPointerForDelegate(_dsc);
             _dsd = new cef_client_t.get_frame_handler_delegate(get_frame_handler);
             _self->_get_frame_handler = Marshal.GetFunctionPointerForDelegate(_dsd);
-            _dse = new cef_client_t.get_jsdialog_handler_delegate(get_jsdialog_handler);
-            _self->_get_jsdialog_handler = Marshal.GetFunctionPointerForDelegate(_dse);
-            _dsf = new cef_client_t.get_keyboard_handler_delegate(get_keyboard_handler);
-            _self->_get_keyboard_handler = Marshal.GetFunctionPointerForDelegate(_dsf);
-            _ds10 = new cef_client_t.get_life_span_handler_delegate(get_life_span_handler);
-            _self->_get_life_span_handler = Marshal.GetFunctionPointerForDelegate(_ds10);
-            _ds11 = new cef_client_t.get_load_handler_delegate(get_load_handler);
-            _self->_get_load_handler = Marshal.GetFunctionPointerForDelegate(_ds11);
-            _ds12 = new cef_client_t.get_print_handler_delegate(get_print_handler);
-            _self->_get_print_handler = Marshal.GetFunctionPointerForDelegate(_ds12);
-            _ds13 = new cef_client_t.get_render_handler_delegate(get_render_handler);
-            _self->_get_render_handler = Marshal.GetFunctionPointerForDelegate(_ds13);
-            _ds14 = new cef_client_t.get_request_handler_delegate(get_request_handler);
-            _self->_get_request_handler = Marshal.GetFunctionPointerForDelegate(_ds14);
-            _ds15 = new cef_client_t.on_process_message_received_delegate(on_process_message_received);
-            _self->_on_process_message_received = Marshal.GetFunctionPointerForDelegate(_ds15);
+            _dse = new cef_client_t.get_permission_handler_delegate(get_permission_handler);
+            _self->_get_permission_handler = Marshal.GetFunctionPointerForDelegate(_dse);
+            _dsf = new cef_client_t.get_jsdialog_handler_delegate(get_jsdialog_handler);
+            _self->_get_jsdialog_handler = Marshal.GetFunctionPointerForDelegate(_dsf);
+            _ds10 = new cef_client_t.get_keyboard_handler_delegate(get_keyboard_handler);
+            _self->_get_keyboard_handler = Marshal.GetFunctionPointerForDelegate(_ds10);
+            _ds11 = new cef_client_t.get_life_span_handler_delegate(get_life_span_handler);
+            _self->_get_life_span_handler = Marshal.GetFunctionPointerForDelegate(_ds11);
+            _ds12 = new cef_client_t.get_load_handler_delegate(get_load_handler);
+            _self->_get_load_handler = Marshal.GetFunctionPointerForDelegate(_ds12);
+            _ds13 = new cef_client_t.get_print_handler_delegate(get_print_handler);
+            _self->_get_print_handler = Marshal.GetFunctionPointerForDelegate(_ds13);
+            _ds14 = new cef_client_t.get_render_handler_delegate(get_render_handler);
+            _self->_get_render_handler = Marshal.GetFunctionPointerForDelegate(_ds14);
+            _ds15 = new cef_client_t.get_request_handler_delegate(get_request_handler);
+            _self->_get_request_handler = Marshal.GetFunctionPointerForDelegate(_ds15);
+            _ds16 = new cef_client_t.on_process_message_received_delegate(on_process_message_received);
+            _self->_on_process_message_received = Marshal.GetFunctionPointerForDelegate(_ds16);
         }
         
         ~CefClient()
@@ -126,38 +130,30 @@ namespace Xilium.CefGlue
         
         private void add_ref(cef_client_t* self)
         {
-            lock (SyncRoot)
+            if (Interlocked.Increment(ref _refct) == 1)
             {
-                var result = ++_refct;
-                if (result == 1)
-                {
-                    lock (_roots) { _roots.Add((IntPtr)_self, this); }
-                }
+                lock (_roots) { _roots.Add((IntPtr)_self, this); }
             }
         }
         
         private int release(cef_client_t* self)
         {
-            lock (SyncRoot)
+            if (Interlocked.Decrement(ref _refct) == 0)
             {
-                var result = --_refct;
-                if (result == 0)
-                {
-                    lock (_roots) { _roots.Remove((IntPtr)_self); }
-                    return 1;
-                }
-                return 0;
+                lock (_roots) { _roots.Remove((IntPtr)_self); }
+                return 1;
             }
+            return 0;
         }
         
         private int has_one_ref(cef_client_t* self)
         {
-            lock (SyncRoot) { return _refct == 1 ? 1 : 0; }
+            return _refct == 1 ? 1 : 0;
         }
         
         private int has_at_least_one_ref(cef_client_t* self)
         {
-            lock (SyncRoot) { return _refct != 0 ? 1 : 0; }
+            return _refct != 0 ? 1 : 0;
         }
         
         internal cef_client_t* ToNative()

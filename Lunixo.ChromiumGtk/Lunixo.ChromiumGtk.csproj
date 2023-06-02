@@ -15,14 +15,17 @@
         </Description>
         <PackageVersion>2.0.5005.1-beta</PackageVersion>
         <LangVersion>10</LangVersion>
+        <OutputType>Exe</OutputType>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+      <DefineConstants>LINUX</DefineConstants>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+      <DefineConstants>LINUX</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>

@@ -9,7 +9,7 @@
 #endif
     internal static unsafe partial class libcef
     {
-        internal const string DllName = "libcef";
+        //internal const string DllName = "libcef";
 
         internal const int ALIGN = 0;
 

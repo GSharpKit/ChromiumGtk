@@ -69,14 +69,14 @@ namespace Lunixo.ChromiumGtk
             var gdkDisplay = InteropLinux.gtk_widget_get_display(_container.Handle);
             var x11Display = InteropLinux.gdk_x11_display_get_xdisplay(gdkDisplay);
 
-            InteropLinux.XFlush(x11Display);
+            //InteropLinux.XFlush(x11Display);
             InteropLinux.XMoveResizeWindow(x11Display, browserWindow, 0, 0, width, height);
-            InteropLinux.XFlush(x11Display);
+            //InteropLinux.XFlush(x11Display);
 
-            /*Browser.CefBrowser.GetHost().NotifyMoveOrResizeStarted();
+            //Browser.CefBrowser.GetHost().NotifyMoveOrResizeStarted();
 
-            Console.WriteLine($"Move: {width} x {height}");
-            Browser.CefBrowser.GetHost().NotifyScreenInfoChanged();*/
+            //Console.WriteLine($"Move: {width} x {height}");
+            //Browser.CefBrowser.GetHost().NotifyScreenInfoChanged();
         }
 
         private void OnRealized(object? sender, System.EventArgs e)
@@ -90,7 +90,8 @@ namespace Lunixo.ChromiumGtk
             var windowHandle = InteropLinux.gtk_widget_get_window(_container.Handle);
             var xid = InteropLinux.gdk_x11_window_get_xid(windowHandle);
 
-            windowInfo.SetAsChild(xid, new CefRectangle(0, 0, AllocatedWidth, AllocatedHeight));
+            var rect = new CefRectangle(0, 0, AllocatedWidth, AllocatedHeight);
+            windowInfo.SetAsChild(xid, rect);
             Browser.Create(windowInfo, _startUrl);
             _initialized = true;
             _startUrl = null;

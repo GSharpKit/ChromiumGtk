@@ -25,8 +25,8 @@
         /// <summary>
         /// Called before a download begins in response to a user-initiated action
         /// (e.g. alt + link click or link click that returns a `Content-Disposition:
-        /// attachment` response from the server). |url| is the target download URL and
-        /// |request_method| is the target method (GET, POST, etc). Return true to
+        /// attachment` response from the server). |url| is the target download URL
+        /// and |request_method| is the target method (GET, POST, etc). Return true to
         /// proceed with the download or false to cancel the download.
         /// </summary>
         protected virtual bool CanDownload(CefBrowser browser, string url, string requestMethod)
@@ -38,21 +38,21 @@
             CheckSelf(self);
 
             var m_browser = CefBrowser.FromNative(browser);
-            var m_download_item = CefDownloadItem.FromNative(download_item);
-            var m_suggested_name = cef_string_t.ToString(suggested_name);
-            var m_callback = CefBeforeDownloadCallback.FromNative(callback);
+            using (var m_download_item = CefDownloadItem.FromNative(download_item))
+            {
+                var m_suggested_name = cef_string_t.ToString(suggested_name);
+                var m_callback = CefBeforeDownloadCallback.FromNative(callback);
 
-            OnBeforeDownload(m_browser, m_download_item, m_suggested_name, m_callback);
-
-            m_download_item.Dispose();
+                OnBeforeDownload(m_browser, m_download_item, m_suggested_name, m_callback);
+            }
         }
 
         /// <summary>
-        /// Called before a download begins. |suggested_name| is the suggested name for
-        /// the download file. By default the download will be canceled. Execute
-        /// |callback| either asynchronously or in this method to continue the download
-        /// if desired. Do not keep a reference to |download_item| outside of this
-        /// method.
+        /// Called before a download begins. |suggested_name| is the suggested name
+        /// for the download file. By default the download will be canceled. Execute
+        /// |callback| either asynchronously or in this method to continue the
+        /// download if desired. Do not keep a reference to |download_item| outside of
+        /// this method.
         /// </summary>
         protected virtual void OnBeforeDownload(CefBrowser browser, CefDownloadItem downloadItem, string suggestedName, CefBeforeDownloadCallback callback)
         {
@@ -64,12 +64,12 @@
             CheckSelf(self);
 
             var m_browser = CefBrowser.FromNative(browser);
-            var m_download_item = CefDownloadItem.FromNative(download_item);
-            var m_callback = CefDownloadItemCallback.FromNative(callback);
+            using (var m_download_item = CefDownloadItem.FromNative(download_item))
+            {
+                var m_callback = CefDownloadItemCallback.FromNative(callback);
 
-            OnDownloadUpdated(m_browser, m_download_item, m_callback);
-
-            m_download_item.Dispose();
+                OnDownloadUpdated(m_browser, m_download_item, m_callback);
+            }
         }
 
         /// <summary>

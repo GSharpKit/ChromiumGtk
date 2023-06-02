@@ -43,7 +43,8 @@
         /// browser will be created before the old browser with the same identifier is
         /// destroyed. |extra_info| is an optional read-only value originating from
         /// CefBrowserHost::CreateBrowser(), CefBrowserHost::CreateBrowserSync(),
-        /// CefLifeSpanHandler::OnBeforePopup() or CefBrowserView::CreateBrowserView().
+        /// CefLifeSpanHandler::OnBeforePopup() or
+        /// CefBrowserView::CreateBrowserView().
         /// </summary>
         protected virtual void OnBrowserCreated(CefBrowser browser, CefDictionaryValue? extraInfo)
         {
@@ -144,7 +145,7 @@
         /// <summary>
         /// Called for global uncaught exceptions in a frame. Execution of this
         /// callback is disabled by default. To enable set
-        /// CefSettings.uncaught_exception_stack_size &gt; 0.
+        /// cef_settings_t.uncaught_exception_stack_size &gt; 0.
         /// </summary>
         protected virtual void OnUncaughtException(CefBrowser browser, CefFrame frame, CefV8Context context, CefV8Exception exception, CefV8StackTrace stackTrace)
         {
@@ -183,20 +184,20 @@
 
             var m_browser = CefBrowser.FromNative(browser);
             var m_frame = CefFrame.FromNative(frame);
+
+            // Client is responsible to call `Dispose()` on message when it no more needed.
             var m_message = CefProcessMessage.FromNative(message);
 
             var result = OnProcessMessageReceived(m_browser, m_frame, source_process, m_message);
-
-            m_message.Dispose();
-
             return result ? 1 : 0;
         }
 
         /// <summary>
-        /// Called when a new message is received from a different process. Return true
-        /// if the message was handled or false otherwise. It is safe to keep a
+        /// Called when a new message is received from a different process. Return
+        /// true if the message was handled or false otherwise. It is safe to keep a
         /// reference to |message| outside of this callback.
         /// </summary>
+        /// <remarks>Client code is responsible to call CefProcessMessage::Dispose() when it no more needed.</remarks>
         protected virtual bool OnProcessMessageReceived(CefBrowser browser, CefFrame frame, CefProcessId sourceProcess, CefProcessMessage message)
         {
             return false;
