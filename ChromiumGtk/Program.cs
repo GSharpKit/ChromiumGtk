@@ -1,17 +1,13 @@
-﻿namespace Lunixo.ChromiumGtk.Examples.Container
+﻿using System.IO;
+using Lunixo.ChromiumGtk.Core;
+using Lunixo.ChromiumGtk.Interop;
+
+using Gtk;
+
+using Xilium.CefGlue;
+
+namespace Lunixo.ChromiumGtk.Examples.Container
 {
-    using System;
-    using System.IO;
-    using System.Reflection;
-
-    using global::Lunixo.ChromiumGtk;
-    using global::Lunixo.ChromiumGtk.Core;
-    using global::Lunixo.ChromiumGtk.Interop;
-
-    using Gtk;
-
-    using Xilium.CefGlue;
-
     internal class Program
     {
         static string cefPath = "/usr/lib/cef";
@@ -48,10 +44,10 @@
                 HeightRequest = 800
             };
             
-            window.Destroyed += (sender, args) => runtime.QuitMessageLoop();
+            window.Destroyed += (sender, _) => runtime.QuitMessageLoop();
             InteropLinux.SetDefaultWindowVisual(window.Handle);
 
-            using var webView = new Lunixo.ChromiumGtk.WebViewX();
+            using var webView = new ChromiumGtk.WebView();
             //webView.LoadUrl("https://dotnet.microsoft.com/");
             webView.LoadUrl("https://www.google.com/");
             

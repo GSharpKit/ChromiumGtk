@@ -1,4 +1,3 @@
-#nullable enable
 using System;
 using Gtk;
 using Lunixo.ChromiumGtk.Core;
@@ -7,14 +6,14 @@ using InteropLinux = Lunixo.ChromiumGtk.Interop.InteropLinux;
 
 namespace Lunixo.ChromiumGtk
 {
-    public class WebViewX : Bin
+    public class WebView : Bin
     {
         private bool _initialized;
         private bool _created;
-        private string? _startUrl;
+        private string _startUrl;
         private readonly Bin _container;
         
-        public WebViewX(CefBrowserSettings? browserSettings = null)
+        public WebView(CefBrowserSettings browserSettings = null)
         {
             _container = new EventBox()
             {
@@ -41,7 +40,7 @@ namespace Lunixo.ChromiumGtk
             };
         }
 
-        private void BrowserOnCreated(object? sender, System.EventArgs e)
+        private void BrowserOnCreated(object sender, EventArgs e)
         {
             Browser.Created -= BrowserOnCreated;
             _created = true;
@@ -79,7 +78,7 @@ namespace Lunixo.ChromiumGtk
             //Browser.CefBrowser.GetHost().NotifyScreenInfoChanged();
         }
 
-        private void OnRealized(object? sender, System.EventArgs e)
+        private void OnRealized(object sender, EventArgs e)
         {
             CreateBrowser();
         }

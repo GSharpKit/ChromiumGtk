@@ -2,9 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
-        <AssemblyName>Lunixo.ChromiumGtk</AssemblyName>
         <RootNamespace>Lunixo.ChromiumGtk</RootNamespace>
-        <PackageId>Lunixo.ChromiumGtk</PackageId>
+        <PackageId>ChromiumGtk</PackageId>
         <IncludeBuildOutput>true</IncludeBuildOutput>
         <Version>2.0.5005.1</Version>
         <Authors>Lunixo</Authors>
