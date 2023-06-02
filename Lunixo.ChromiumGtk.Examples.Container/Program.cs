@@ -34,7 +34,7 @@
             }, new[]
             {
                 "--headless", 
-                "--disable-gpu"
+                "--disable-gpu",
             });
             runtime.Initialize();
 
@@ -49,7 +49,7 @@
             window.Destroyed += (sender, args) => runtime.QuitMessageLoop();
             InteropLinux.SetDefaultWindowVisual(window.Handle);
 
-            using var webView = new WebView();
+            using var webView = new Lunixo.ChromiumGtk.WebViewX();
             webView.LoadUrl("https://dotnet.microsoft.com/");
             
             window.Add(webView);

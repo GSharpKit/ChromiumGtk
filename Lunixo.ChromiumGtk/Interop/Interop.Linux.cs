@@ -3,12 +3,15 @@
 
 using System;
 using System.Runtime.InteropServices;
+using Xilium.CefGlue.Interop;
 
 namespace Lunixo.ChromiumGtk.Interop
 {
     public class InteropLinux
     {
-      
+        [DllImport(libcef.DllName, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr cef_get_xdisplay();
+
         [DllImport(Library.GtkLib, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr gtk_widget_get_window(IntPtr widget);
 
@@ -91,11 +94,39 @@ namespace Lunixo.ChromiumGtk.Interop
             }
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct XWindowChanges
+        {
+            public int x, y;
+            public int width, height;
+            public int border_width;
+            public int sibling;
+            public int stack_mode;
+        }
+
+        [Flags()]
+        public enum XConfigureWindowMask
+        {
+            CWX = (1 << 0),
+            CWY = (1 << 1),
+            CWWidth = (1 << 2),
+            CWHeight = (1 << 3),
+            CWBorderWidth = (1 << 4),
+            CWSibling = (1 << 5),
+            CWStackMode = (1 << 6)
+        }
+
+        [DllImport(Library.X11Lib)]
+        public static extern void XConfigureWindow(IntPtr display, IntPtr w, int value_mask, XWindowChanges values);
+
         [DllImport(Library.X11Lib)]
         public static extern int XMoveResizeWindow(IntPtr display, IntPtr w, int x, int y, int width, int height);
 
         [DllImport(Library.X11Lib)]
         public static extern IntPtr XOpenDisplay(IntPtr display);
+
+        [DllImport(Library.X11Lib)]
+        public static extern IntPtr XFlush(IntPtr display);
 
         [DllImport(Library.X11Lib)]
         public static extern int XCloseDisplay(IntPtr display);

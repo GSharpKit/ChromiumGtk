@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <AssemblyName>Lunixo.ChromiumGtk</AssemblyName>
         <RootNamespace>Lunixo.ChromiumGtk</RootNamespace>
         <PackageId>Lunixo.ChromiumGtk</PackageId>
@@ -14,6 +14,7 @@
             Chromium Embedded Framework (CEF) WebView for GtkSharp
         </Description>
         <PackageVersion>2.0.5005.1-beta</PackageVersion>
+        <LangVersion>10</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

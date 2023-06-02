@@ -7,19 +7,19 @@ using InteropLinux = Lunixo.ChromiumGtk.Interop.InteropLinux;
 
 namespace Lunixo.ChromiumGtk
 {
-    public class WebView : Bin
+    public class WebViewX : Bin
     {
         private bool _initialized;
         private bool _created;
         private string? _startUrl;
         private readonly Bin _container;
         
-        public WebView(CefBrowserSettings? browserSettings = null)
+        public WebViewX(CefBrowserSettings? browserSettings = null)
         {
             _container = new EventBox()
             {
                 Halign = Align.Fill,
-                Valign = Align.Fill
+                Valign = Align.Fill,
             };
             
             _container.Realized += OnRealized;
@@ -62,18 +62,24 @@ namespace Lunixo.ChromiumGtk
 
         protected virtual void ResizeBrowser(int width, int height)
         {
-            if (!_created)
-            {
-                return;
-            }
-            
+            if (!_created) return;
+
             var browserWindow = Browser.CefBrowser.GetHost().GetWindowHandle();
+
             var gdkDisplay = InteropLinux.gtk_widget_get_display(_container.Handle);
             var x11Display = InteropLinux.gdk_x11_display_get_xdisplay(gdkDisplay);
+
+            InteropLinux.XFlush(x11Display);
             InteropLinux.XMoveResizeWindow(x11Display, browserWindow, 0, 0, width, height);
+            InteropLinux.XFlush(x11Display);
+
+            /*Browser.CefBrowser.GetHost().NotifyMoveOrResizeStarted();
+
+            Console.WriteLine($"Move: {width} x {height}");
+            Browser.CefBrowser.GetHost().NotifyScreenInfoChanged();*/
         }
 
-        private void OnRealized(object sender, System.EventArgs e)
+        private void OnRealized(object? sender, System.EventArgs e)
         {
             CreateBrowser();
         }
