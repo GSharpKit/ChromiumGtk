@@ -1,5 +1,7 @@
 
 Similar active projects:
+
+* https://github.com/lunixo/ChromiumGtk (Fork)
 * https://github.com/OutSystems/CefGlue
 * https://github.com/chromelyapps/Chromely
 
@@ -18,6 +20,8 @@ ChromiumGtk is a WebView for GtkSharp using Chromium Embedded Framework (CEF) an
 
 * [GtkSharp](https://github.com/GtkSharp/GtkSharp)
 * [CEF](https://bitbucket.org/chromiumembedded/cef/)
+
+* https://cef-builds.spotifycdn.com/cef_binary_112.3.0%2Bgb09c4ca%2Bchromium-112.0.5615.165_linux64_client.tar.bz2 install in /usr/lib/cef
 
 ## Usage
 

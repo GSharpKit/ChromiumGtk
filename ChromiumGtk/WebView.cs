@@ -12,7 +12,18 @@ namespace Lunixo.ChromiumGtk
         private bool _created;
         private string _startUrl;
         private readonly Bin _container;
-        
+
+        static Runtime runtime;
+
+#if LINUX
+        const string subprocessName = "cefsimple";
+        const string cefPath = "/usr/lib/cef";
+#endif
+#if WINDOWS
+        const string subprocessName = "cefclient.exe";
+        const string cefPath = @"C:\Program Files\GSharpKit\bin\cef";
+#endif
+
         public WebView(CefBrowserSettings browserSettings = null)
         {
             _container = new EventBox()
@@ -29,7 +40,53 @@ namespace Lunixo.ChromiumGtk
             Browser.Created += BrowserOnCreated;
             SizeAllocated += OnSizeAllocated;
         }
-        
+
+        /// <summary>
+        /// Initialize CEF Runtime
+        /// </summary>
+        public static void Initialize ()
+        {
+            //mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+
+            runtime = new Runtime(new CefSettings
+            {
+                MultiThreadedMessageLoop = false,
+                LogSeverity = CefLogSeverity.Disable,
+                LocalesDirPath = System.IO.Path.Combine(cefPath, "locales"),
+                BrowserSubprocessPath = System.IO.Path.Combine(cefPath, subprocessName), // Must have chmod 755
+                ResourcesDirPath = System.IO.Path.Combine(cefPath), // Must have chmod 755
+                NoSandbox = true,
+                BackgroundColor = new CefColor(0, 0, 0, 0),
+                WindowlessRenderingEnabled = true,
+                ExternalMessagePump = true,
+                Locale = "en-US",
+                CommandLineArgsDisabled = false,
+            }, new[]
+            {
+                "--headless",
+                "--disable-gpu",
+            });
+            runtime.Initialize();
+            runtime.DoMessageLoopWork();
+        }
+
+        public static void Run ()
+        {
+            GLib.Timeout.Add(10, OnIdlePump);
+        }
+
+        static bool OnIdlePump()
+        {
+            //Console.WriteLine ("OnIdlePump: " + IsMainThread);
+            runtime.DoMessageLoopWork();
+            return true;
+        }
+
+        public static void Quit ()
+        {
+            runtime.Shutdown();
+        }
+
         public WebBrowser Browser { get; }
 
         public static CefBrowserSettings CreateDefaultBrowserSettings()
@@ -59,23 +116,32 @@ namespace Lunixo.ChromiumGtk
             }
         }
 
-        protected virtual void ResizeBrowser(int width, int height)
+
+        protected virtual void ResizeBrowser (int width, int height)
         {
-            if (!_created) return;
+            try
+            {
+                if (!_created) return;
 
-            var browserWindow = Browser.CefBrowser.GetHost().GetWindowHandle();
+                var browserWindow = Browser.CefBrowser.GetHost ().GetWindowHandle ();
 
-            var gdkDisplay = InteropLinux.gtk_widget_get_display(_container.Handle);
-            var x11Display = InteropLinux.gdk_x11_display_get_xdisplay(gdkDisplay);
+#if LINUX
+                var gdkDisplay = InteropLinux.gtk_widget_get_display (_container.Handle);
+                var x11Display = InteropLinux.gdk_x11_display_get_xdisplay (gdkDisplay);
+                InteropLinux.XMoveResizeWindow (x11Display, browserWindow, 0, 0, width, height);
+#endif
 
-            //InteropLinux.XFlush(x11Display);
-            InteropLinux.XMoveResizeWindow(x11Display, browserWindow, 0, 0, width, height);
-            //InteropLinux.XFlush(x11Display);
+#if WINDOWS
+				InteropWindows.SetWindowPos(browserWindow, 0, 0, 0, width, height, 0x0002 | 0x0004 | 0x0010); //SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+#endif
 
-            //Browser.CefBrowser.GetHost().NotifyMoveOrResizeStarted();
-
-            //Console.WriteLine($"Move: {width} x {height}");
-            //Browser.CefBrowser.GetHost().NotifyScreenInfoChanged();
+                runtime.DoMessageLoopWork ();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine (e.Message);
+                Console.WriteLine (e.StackTrace);
+            }
         }
 
         private void OnRealized(object sender, EventArgs e)

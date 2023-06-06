@@ -32,6 +32,11 @@ namespace Lunixo.ChromiumGtk.Core
             CefRuntime.Initialize(mainArgs, _cefSettings, customApp ?? new CefApp(), IntPtr.Zero);
         }
 
+        public void DoMessageLoopWork()
+        {
+            CefRuntime.DoMessageLoopWork();
+        }
+
         public void RunMessageLoop()
         {
             CefRuntime.RunMessageLoop();

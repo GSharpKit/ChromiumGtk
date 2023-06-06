@@ -1,60 +1,36 @@
-﻿using System.IO;
-using Lunixo.ChromiumGtk.Core;
-using Lunixo.ChromiumGtk.Interop;
+﻿using Lunixo.ChromiumGtk.Interop;
 
 using Gtk;
-
-using Xilium.CefGlue;
 
 namespace Lunixo.ChromiumGtk.Examples.Container
 {
     internal class Program
     {
-        static string cefPath = "/usr/lib/cef";
-
         private static void Main(string[] args)
         {
-            var runtime = new Runtime(new CefSettings
-            {
-                MultiThreadedMessageLoop = false,
-                LogSeverity = CefLogSeverity.Disable,
-                //LogFile = $"logs_{DateTime.Now:yyyyMMdd}.log",
-                //RemoteDebuggingPort = 20480,
-                LocalesDirPath = Path.Combine(cefPath, "locales"),
-                BrowserSubprocessPath = Path.Combine(cefPath, "cefsimple"),
-                ResourcesDirPath = Path.Combine(cefPath),
-                NoSandbox = true,
-                BackgroundColor = new CefColor(0, 0, 0, 0),
-                WindowlessRenderingEnabled = true,
-                ExternalMessagePump = false,
-                Locale = "en-US",
-                CommandLineArgsDisabled = false,
-            }, new[]
-            {
-                "--headless", 
-                "--disable-gpu",
-            });
-            runtime.Initialize();
+            WebView.Initialize();
 
             Application.Init();
             
-            using var window = new Window("Lunixo Example")
+            using var window = new Window("Chromium Gtk Example")
             {
                 WidthRequest = 1200,
                 HeightRequest = 800
             };
             
-            window.Destroyed += (sender, _) => runtime.QuitMessageLoop();
+            window.Destroyed += (_, _) => WebView.Quit();
+            #if LINUX
             InteropLinux.SetDefaultWindowVisual(window.Handle);
+            #endif
 
-            using var webView = new ChromiumGtk.WebView();
-            //webView.LoadUrl("https://dotnet.microsoft.com/");
+            using var webView = new WebView();
             webView.LoadUrl("https://www.google.com/");
             
             window.Add(webView);
             window.ShowAll();
 
-            runtime.RunMessageLoop();
+            WebView.Run();
+            Application.Run();
         }
     }
 }
