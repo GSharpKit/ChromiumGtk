@@ -18,7 +18,7 @@ namespace Lunixo.ChromiumGtk.Core
 
         public void Create(CefWindowInfo windowInfo, string startUrl)
         {
-            CefBrowserHost.CreateBrowser(windowInfo, Client, _settings, startUrl);
+            CefBrowserHost.CreateBrowserSync(windowInfo, Client, _settings, startUrl);
         }
 
         public event EventHandler Created;
@@ -26,8 +26,7 @@ namespace Lunixo.ChromiumGtk.Core
         internal void OnCreated(CefBrowser browser)
         {
             CefBrowser = browser;
-            var handler = Created;
-            handler?.Invoke(this, new System.EventArgs());
+            Created?.Invoke(this, EventArgs.Empty);
         }
         
         public void Dispose()

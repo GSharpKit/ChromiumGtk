@@ -11,7 +11,15 @@ namespace Lunixo.ChromiumGtk.Handlers
         {
             _core = core;
         }
-        
+
+        protected override bool OnBeforePopup(CefBrowser browser, CefFrame frame, string targetUrl, string targetFrameName,
+            CefWindowOpenDisposition targetDisposition, bool userGesture, CefPopupFeatures popupFeatures,
+            CefWindowInfo windowInfo, ref CefClient client, CefBrowserSettings settings, ref CefDictionaryValue extraInfo,
+            ref bool noJavascriptAccess)
+        {
+            return true;
+        }
+
         protected override void OnAfterCreated(CefBrowser browser)
         {
             base.OnAfterCreated(browser);

@@ -14,7 +14,7 @@ namespace Lunixo.ChromiumGtk.Core
 
         public Runtime(CefSettings cefSettings = null, string[] commandLineArgs = null)
         {
-            _cefSettings = cefSettings ?? CreateDefaultSettings();
+            _cefSettings = cefSettings;
             _commandLineArgs = commandLineArgs ?? Environment.GetCommandLineArgs();
         }
         
@@ -45,25 +45,6 @@ namespace Lunixo.ChromiumGtk.Core
         public void QuitMessageLoop()
         {
             CefRuntime.QuitMessageLoop();
-        }
-
-        public static CefSettings CreateDefaultSettings()
-        {
-            return new CefSettings
-            {
-                MultiThreadedMessageLoop = false,
-                LogSeverity = CefLogSeverity.Verbose,
-                LogFile = $"logs_{DateTime.Now:yyyyMMdd}.log",
-                RemoteDebuggingPort = 20480,
-                LocalesDirPath = Path.Combine(Environment.CurrentDirectory, "locales"),
-                BrowserSubprocessPath = Path.Combine(Environment.CurrentDirectory, "cefsimple"),
-                ResourcesDirPath = Path.Combine(Environment.CurrentDirectory),
-                NoSandbox = true,
-                BackgroundColor = new CefColor(0,0, 0,0),
-                WindowlessRenderingEnabled = false,
-                ExternalMessagePump = false,
-                Locale = "en-US"
-            };
         }
 
         public void Shutdown()

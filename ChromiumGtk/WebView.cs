@@ -6,39 +6,95 @@ using InteropLinux = Lunixo.ChromiumGtk.Interop.InteropLinux;
 
 namespace Lunixo.ChromiumGtk
 {
+    class FocusHandler : CefFocusHandler
+    {
+        protected override bool OnSetFocus(CefBrowser browser, CefFocusSource source)
+        {
+            return true;
+        }
+
+        protected override void OnGotFocus(CefBrowser browser)
+        {
+            base.OnGotFocus(browser);
+        }
+
+        protected override void OnTakeFocus(CefBrowser browser, bool next)
+        {
+            base.OnTakeFocus(browser, next);
+        }
+    }
+
+    class PopupHandler : CefContextMenuHandler
+    {
+        protected override void OnBeforeContextMenu(CefBrowser browser, CefFrame frame, CefContextMenuParams state, CefMenuModel model)
+        {
+            base.OnBeforeContextMenu(browser, frame, state, model);
+        }
+
+        protected override bool RunContextMenu(CefBrowser browser, CefFrame frame, CefContextMenuParams parameters, CefMenuModel model, CefRunContextMenuCallback callback)
+        {
+            return true;
+        }
+    }
+
+    class RequestHandler : CefRequestHandler
+    {
+        protected override CefResourceRequestHandler GetResourceRequestHandler (CefBrowser browser, CefFrame frame, CefRequest request, bool isNavigation, bool isDownload, string requestInitiator, ref bool disableDefaultHandling)
+        {
+            return null;
+        }
+
+        protected override bool OnOpenUrlFromTab (CefBrowser browser, CefFrame frame, string targetUrl, CefWindowOpenDisposition targetDisposition, bool userGesture)
+        {
+            return userGesture;
+        }
+
+        protected override bool OnBeforeBrowse (CefBrowser browser, CefFrame frame, CefRequest request, bool userGesture, bool isRedirect)
+        {
+            if ((request.TransitionType & CefTransitionType.ForwardBackFlag) != 0)
+            {
+                return true;
+            }
+
+            return userGesture;
+        }
+    }
+
     public class WebView : Bin
     {
         private bool _initialized;
         private bool _created;
         private string _startUrl;
-        private readonly Bin _container;
 
-        static Runtime runtime;
+        private static bool running;
+        private static Runtime runtime;
 
 #if LINUX
-        const string subprocessName = "cefsimple";
         const string cefPath = "/usr/lib/cef";
 #endif
 #if WINDOWS
-        const string subprocessName = "cefclient.exe";
         const string cefPath = @"C:\Program Files\GSharpKit\bin\cef";
 #endif
 
+        public static CefBrowserSettings CreateDefaultBrowserSettings()
+        {
+            return new CefBrowserSettings
+            {
+                DefaultEncoding = "UTF-8",
+                WebGL = CefState.Disabled
+            };
+        }
+
         public WebView(CefBrowserSettings browserSettings = null)
         {
-            _container = new EventBox()
-            {
-                Halign = Align.Fill,
-                Valign = Align.Fill,
-            };
-            
-            _container.Realized += OnRealized;
-            
-            Add(_container);
-            
+            Realized += OnRealized;
+
             Browser = new WebBrowser(browserSettings ?? CreateDefaultBrowserSettings());
             Browser.Created += BrowserOnCreated;
+
             SizeAllocated += OnSizeAllocated;
+            ConfigureEvent += OnConfigureEvent;
+            FocusInEvent += OnFocusIn;
         }
 
         /// <summary>
@@ -46,14 +102,15 @@ namespace Lunixo.ChromiumGtk
         /// </summary>
         public static void Initialize ()
         {
-            //mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
-
             runtime = new Runtime(new CefSettings
             {
                 MultiThreadedMessageLoop = false,
-                LogSeverity = CefLogSeverity.Disable,
+                LogSeverity = CefLogSeverity.Debug,
+                LogFile = $"logs_{DateTime.Now:yyyyMMdd}.log",
+                CachePath = null,
+                RemoteDebuggingPort = 32423,
                 LocalesDirPath = System.IO.Path.Combine(cefPath, "locales"),
-                BrowserSubprocessPath = System.IO.Path.Combine(cefPath, subprocessName), // Must have chmod 755
+                //BrowserSubprocessPath = System.IO.Path.Combine(cefPath, subprocessName), // NOT USED with --no-zygote
                 ResourcesDirPath = System.IO.Path.Combine(cefPath), // Must have chmod 755
                 NoSandbox = true,
                 BackgroundColor = new CefColor(0, 0, 0, 0),
@@ -63,8 +120,11 @@ namespace Lunixo.ChromiumGtk
                 CommandLineArgsDisabled = false,
             }, new[]
             {
-                "--headless",
+                //"--headless",
                 "--disable-gpu",
+                "--no-zygote",
+                "--no-sandbox",
+                "--single-process"
             });
             runtime.Initialize();
             runtime.DoMessageLoopWork();
@@ -72,40 +132,51 @@ namespace Lunixo.ChromiumGtk
 
         public static void Run ()
         {
+            running = true;
             GLib.Timeout.Add(10, OnIdlePump);
         }
 
         static bool OnIdlePump()
         {
-            //Console.WriteLine ("OnIdlePump: " + IsMainThread);
             runtime.DoMessageLoopWork();
-            return true;
+            return running;
         }
 
         public static void Quit ()
         {
+            running = false;
             runtime.Shutdown();
         }
 
         public WebBrowser Browser { get; }
-
-        public static CefBrowserSettings CreateDefaultBrowserSettings()
-        {
-            return new CefBrowserSettings
-            {
-                DefaultEncoding = "UTF-8",
-            };
-        }
 
         private void BrowserOnCreated(object sender, EventArgs e)
         {
             Browser.Created -= BrowserOnCreated;
             _created = true;
 
+            Browser.Client.FocusHandler = new FocusHandler ();
+            Browser.Client.ContextMenuHandler = new PopupHandler();
+            Browser.Client.RequestHandler = new RequestHandler();
+
             if (_startUrl != null)
             {
                 LoadUrl(_startUrl);
             }
+        }
+
+        private void OnFocusIn(object o, FocusInEventArgs args)
+        {
+            Browser.CefBrowser.GetHost().SetFocus(true);
+
+            args.RetVal = false;
+        }
+
+        private void OnConfigureEvent(object o, ConfigureEventArgs args)
+        {
+            Browser.CefBrowser.GetHost().NotifyMoveOrResizeStarted();
+
+            args.RetVal = false;
         }
 
         private void OnSizeAllocated(object o, SizeAllocatedArgs args)
@@ -114,6 +185,8 @@ namespace Lunixo.ChromiumGtk
             {
                 ResizeBrowser(args.Allocation.Width, args.Allocation.Height);
             }
+
+            args.RetVal = true;
         }
 
 
@@ -126,7 +199,7 @@ namespace Lunixo.ChromiumGtk
                 var browserWindow = Browser.CefBrowser.GetHost ().GetWindowHandle ();
 
 #if LINUX
-                var gdkDisplay = InteropLinux.gtk_widget_get_display (_container.Handle);
+                var gdkDisplay = InteropLinux.gtk_widget_get_display (Handle);
                 var x11Display = InteropLinux.gdk_x11_display_get_xdisplay (gdkDisplay);
                 InteropLinux.XMoveResizeWindow (x11Display, browserWindow, 0, 0, width, height);
 #endif
@@ -135,6 +208,7 @@ namespace Lunixo.ChromiumGtk
 				InteropWindows.SetWindowPos(browserWindow, 0, 0, 0, width, height, 0x0002 | 0x0004 | 0x0010); //SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
 #endif
 
+                Browser.CefBrowser.GetHost ().WasResized();
                 runtime.DoMessageLoopWork ();
             }
             catch (Exception e)
@@ -152,11 +226,15 @@ namespace Lunixo.ChromiumGtk
         private void CreateBrowser()
         {
             var windowInfo = CefWindowInfo.Create();
-            var windowHandle = InteropLinux.gtk_widget_get_window(_container.Handle);
+
+#if LINUX
+            var windowHandle = InteropLinux.gtk_widget_get_window(Handle);
             var xid = InteropLinux.gdk_x11_window_get_xid(windowHandle);
 
             var rect = new CefRectangle(0, 0, AllocatedWidth, AllocatedHeight);
             windowInfo.SetAsChild(xid, rect);
+#endif
+
             Browser.Create(windowInfo, _startUrl);
             _initialized = true;
             _startUrl = null;
@@ -174,7 +252,7 @@ namespace Lunixo.ChromiumGtk
                 _startUrl = url;
             }
         }
-        
+
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
