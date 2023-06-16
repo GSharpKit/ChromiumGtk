@@ -26,29 +26,32 @@ ChromiumGtk is a WebView for GtkSharp using Chromium Embedded Framework (CEF) an
 ## Usage
 
 ```C#
-static void Main()
+static void Main(string[] args)
 {
-    var runtime = new Runtime();
-    runtime.Initialize();
-    Gtk.Application.Init();
+    WebView.Initialize();
+
+    Application.Init();
     
-    using var window = new Gtk.Window("ChromiumGTK Demo")
+    using var window = new Window("Chromium Gtk Example")
     {
         WidthRequest = 1200,
         HeightRequest = 800
     };
-    
-    window.Destroyed += (sender, args) => runtime.QuitMessageLoop();
+
+    window.Destroyed += (_, _) => WebView.Quit();
+
+    #if LINUX
     InteropLinux.SetDefaultWindowVisual(window.Handle);
-    
+    #endif
+
     using var webView = new WebView();
-    webView.LoadUrl("https://dotnet.microsoft.com/");
-    
+    webView.LoadUrl("https://www.google.com/");
+
     window.Add(webView);
     window.ShowAll();
-    
-    runtime.RunMessageLoop();
-    runtime.Shutdown();
+
+    WebView.Run();
+    Application.Run();
 }
 ```
 

@@ -120,10 +120,8 @@ namespace Lunixo.ChromiumGtk
                 CommandLineArgsDisabled = false,
             }, new[]
             {
-                //"--headless",
                 "--disable-gpu",
                 "--no-zygote",
-                "--no-sandbox",
                 "--single-process"
             });
             runtime.Initialize();
